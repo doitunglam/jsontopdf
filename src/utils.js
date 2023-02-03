@@ -57,7 +57,7 @@ var rightImage = async (doc, imgURL, y) => {
 
         if (imgRatio <= 1) imgWidth = imgHeight * imgRatio
         else imgHeight = imgWidth * imgRatio
-        
+
         const data = 'data:image/jpeg;base64,' + resp.data
         const x = doc.internal.pageSize.width - PAGE_MARGIN - imgWidth
         doc.addImage(data, 'JPEG', x, y - 5, imgWidth, imgHeight)
@@ -67,17 +67,17 @@ var rightImage = async (doc, imgURL, y) => {
     }
 }
 
-const loadOptions = () => {
+const loadOptions = (key) => {
     var templateOptions;
-    const DOC_TEMPLATE = Number(process.env.DOC_TEMPLATE);
-
-    switch (DOC_TEMPLATE) {
-        case 0:
+    switch (key) {
+        case 'endterm':
             templateOptions = require('../res/cuoiky.json')
             break;
-        case 1:
+        case 'midterm':
             templateOptions = require('../res/quatrinh.json')
             break;
+        default:
+            templateOptions = { error: true }
     }
     return templateOptions
 }

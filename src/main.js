@@ -4,7 +4,9 @@ let bodyParser = require('body-parser');
 require('jspdf-autotable');
 require('dotenv').config();
 const { callAddFont } = require('./fontLoader')
-const { addBodyPage, addFooter } = require('./addPage')
+const { addBodyPage, addFooter } = require('./addPage');
+const e = require('express');
+const { loadOptions } = require('./utils');
 
 //create new Express App
 var app = express();
@@ -20,12 +22,16 @@ app.use(bodyParser.json());
 jsPDF.API.events.push(['addFonts', callAddFont])
 
 //POST request handling
-app.post('/', function (request, reply) {
+app.post('/:key', function (request, reply) {
+   const OPTIONS = loadOptions(request.params.key);
+   if (OPTIONS.error == true) { reply.sendStatus(400); return }
    //console.time("dbsave");
 
    //Reading & Analyzing request
    var studentList = request.body.students;
    var signatureURL = request.body.signatureImageUrl;
+   var pageHeader = request.body;
+   pageHeader.templateHeader = OPTIONS.header;
 
    for (var i = 0; i < studentList.length; i++)
       studentList[i].stt = i + 1;
@@ -40,7 +46,7 @@ app.post('/', function (request, reply) {
 
    pageAmount = Math.ceil(studentList.length / chunkSize) + 1;
    for (var i = 1; i < pageAmount; i++)
-      yPos = addBodyPage(doc, request.body, studentList, i, pageAmount, yPos);
+      yPos = addBodyPage(doc, pageHeader, studentList, i, pageAmount);
    addFooter(doc, signatureURL, pageAmount, yPos).then(() => {
       var responseBuffer = doc.output('arraybuffer');
       reply.setHeader('Content-Type', 'application/pdf')

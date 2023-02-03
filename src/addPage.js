@@ -12,7 +12,6 @@ global.node = true;
 const LINE_HEIGHT = Number(process.env.LINE_HEIGHT)
 const PAGE_MARGIN = Number(process.env.PAGE_MARGIN)
 const CHUNK_SIZE = Number(process.env.CHUNK_SIZE);
-const OPTIONS = loadOptions();
 
 
 const addBodyPage = function (doc, pageHeader, studentList, index, pageAmount) {
@@ -30,7 +29,7 @@ const addBodyPage = function (doc, pageHeader, studentList, index, pageAmount) {
 
     //line 2
     doc.setFontSize(16)
-    centerText(doc, OPTIONS.header + " " + pageHeader.semester, y * LINE_HEIGHT);
+    centerText(doc, pageHeader.templateHeader + " " + pageHeader.semester, y * LINE_HEIGHT);
     y = y + 1
 
     //line 3
