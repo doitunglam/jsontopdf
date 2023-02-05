@@ -11,5 +11,4 @@ const callAddFont = function () {
     this.addFont('SVN-Times New Roman-normal.ttf', 'SVN-Times New Roman-normal', 'bold');
 };
 
-
 module.exports = { callAddFont }

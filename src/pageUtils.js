@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { justifyTexts, centerText, rightText, loadOptions, rightImage } = require("../src/utils");
+const { justifyTexts, centerText, rightText, loadOptions, rightImage } = require("./lineUtils");
 const axios = require('axios');
 const sizeOf = require('image-size')
 
@@ -17,39 +17,40 @@ const CHUNK_SIZE = Number(process.env.CHUNK_SIZE);
 const addBodyPage = function (doc, pageHeader, studentList, index, pageAmount) {
     doc.addPage();
 
-    var y = 1
-    var yPos = 0
+    var line = 1
 
     //line 1
     doc.setFont('SVN-Times New Roman-normal', 'bold');
     doc.setFontSize(12);
-    doc.text("TRƯỜNG ĐẠI HỌC BÁCH KHOA HÀ NỘI", PAGE_MARGIN, y * LINE_HEIGHT);
-    rightText(doc, "Trang " + index + " / " + pageAmount, y * LINE_HEIGHT);
-    y = y + 1
+    doc.text("TRƯỜNG ĐẠI HỌC BÁCH KHOA HÀ NỘI", PAGE_MARGIN, line * LINE_HEIGHT);
+    rightText(doc, "Trang " + index + " / " + pageAmount, line * LINE_HEIGHT);
+    line = line + 1
 
     //line 2
     doc.setFontSize(16)
-    centerText(doc, pageHeader.templateHeader + " " + pageHeader.semester, y * LINE_HEIGHT);
-    y = y + 1
+    centerText(doc, pageHeader.templateHeader + " " + pageHeader.semester, line * LINE_HEIGHT);
+    line = line + 1
 
     //line 3
     doc.setFont('SVN-Times New Roman-normal', 'normal');
     doc.setFontSize(12)
-    doc.text("Khoa/Viện: " + pageHeader.unit, PAGE_MARGIN, y * LINE_HEIGHT);
-    rightText(doc, "Giảng viên: " + pageHeader.teacher, y * LINE_HEIGHT);
-    y = y + 1
+    doc.text("Khoa/Viện: " + pageHeader.unit, PAGE_MARGIN, line * LINE_HEIGHT);
+    rightText(doc, "Giảng viên: " + pageHeader.teacher, line * LINE_HEIGHT);
+    line = line + 1
 
     //line 4
     //TODO: update splitText rendering mechanism
     var splitTexts = [pageHeader.courseId, pageHeader.courseName, pageHeader.classType, "placeholder_malopthi", pageHeader.classId];
-    justifyTexts(doc, splitTexts, y * LINE_HEIGHT);
-    y = y + 1
+    justifyTexts(doc, splitTexts, line * LINE_HEIGHT);
+    line = line + 1
 
     var studentListChunk = studentList.slice((index - 1) * CHUNK_SIZE, index * CHUNK_SIZE);
+
     //Add table to PDF
+    var yPos = 0
     doc.autoTable({
         //startX: 50,
-        startY: y * LINE_HEIGHT,
+        startY: line * LINE_HEIGHT,
         margin: PAGE_MARGIN,
         styles: {
             font: "SVN-Times New Roman-normal",
@@ -89,7 +90,6 @@ const addBodyPage = function (doc, pageHeader, studentList, index, pageAmount) {
 
 const addFooter = async (doc, signatureURL, pageAmount, yPos) => {
     
-    console.log(yPos)
     if (yPos > 200) {
         yPos = PAGE_MARGIN
         doc.addPage();

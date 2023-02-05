@@ -1,12 +1,12 @@
 const { jsPDF } = require('jspdf');
-var express = require('express');
-let bodyParser = require('body-parser');
+const express = require('express');
+const bodyParser = require('body-parser');
 require('jspdf-autotable');
 require('dotenv').config();
 const { callAddFont } = require('./fontLoader')
-const { addBodyPage, addFooter } = require('./addPage');
-const e = require('express');
-const { loadOptions } = require('./utils');
+const { addBodyPage, addFooter } = require('./pageUtils');
+const { loadOptions } = require('./lineUtils');
+const { studentsPreprocess } = require('./preprocessUtils');
 
 //create new Express App
 var app = express();
@@ -32,6 +32,15 @@ app.post('/:key', function (request, reply) {
    var signatureURL = request.body.signatureImageUrl;
    var pageHeader = request.body;
    pageHeader.templateHeader = OPTIONS.header;
+
+   try {
+      studentsPreprocess(studentList);
+   }
+   catch (err) {
+      reply.statusMessage = err.message;
+      reply.status(400).end();
+      return
+   }
 
    for (var i = 0; i < studentList.length; i++)
       studentList[i].stt = i + 1;
