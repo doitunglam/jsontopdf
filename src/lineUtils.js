@@ -6,7 +6,22 @@ const sizeOf = require('image-size')
 
 
 const PAGE_MARGIN = Number(process.env.PAGE_MARGIN)
+const LINE_HEIGHT = Number(process.env.LINE_HEIGHT)
 
+
+
+// const justifyArray = (doc, texts, y) => {
+//     const prevIndex = 0
+//     var currY = y;
+//     var lengthSum = 0 
+//     for(index in texts)
+//     {
+//         const textLength = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor
+//         lengthSum = lengthSum + textLength
+//         if (lengthSum)
+//     }
+
+// }
 const justifyTexts = (doc, texts, y) => {
     texts = texts.filter(item => item)
     var startX = PAGE_MARGIN
@@ -19,7 +34,9 @@ const justifyTexts = (doc, texts, y) => {
     }
     const spaceSum = width - lengthSum - 2 * PAGE_MARGIN;
     //TODO: handling divide-by-zero
-    const avgSpace = spaceSum / (texts.length - 1);
+    if (texts.length != 1)
+        var avgSpace = spaceSum / (texts.length - 1);
+    else var avgSpace = 0;
     for (index in texts) {
         const text = texts[index]
         const textLength = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor

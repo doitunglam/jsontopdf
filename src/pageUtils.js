@@ -1,7 +1,5 @@
 require('dotenv').config();
-const { justifyTexts, centerText, rightText, loadOptions, rightImage } = require("./lineUtils");
-const axios = require('axios');
-const sizeOf = require('image-size')
+const { justifyTexts, centerText, rightText, rightImage } = require("./lineUtils");
 
 //jspdf setups
 global.window = { document: { createElementNS: () => { return {} } } };
@@ -40,7 +38,7 @@ const addBodyPage = function (doc, pageHeader, studentList, index, pageAmount) {
 
     //line 4
     //TODO: update splitText rendering mechanism
-    var splitTexts = [pageHeader.courseId, pageHeader.courseName, pageHeader.classType, "placeholder_malopthi", pageHeader.classId];
+    var splitTexts = [pageHeader.courseId, pageHeader.courseName, pageHeader.classType, pageHeader.malopthi, pageHeader.classId];
     justifyTexts(doc, splitTexts, line * LINE_HEIGHT);
     line = line + 1
 
@@ -89,8 +87,8 @@ const addBodyPage = function (doc, pageHeader, studentList, index, pageAmount) {
 }
 
 const addFooter = async (doc, signatureURL, pageAmount, yPos) => {
-    
-    if (yPos > 200) {
+
+    if (yPos > 0) {
         yPos = PAGE_MARGIN
         doc.addPage();
         doc.setFont('SVN-Times New Roman-normal', 'bold');
@@ -106,8 +104,8 @@ const addFooter = async (doc, signatureURL, pageAmount, yPos) => {
     doc.setFont('SVN-Times New Roman-normal', 'normal');
     doc.text("Ngày xuất bảng điểm: " + day + "/" + month + "/" + year, PAGE_MARGIN, yPos);
     rightText(doc, "Cán bộ vào bảng điểm", yPos);
-    yPos = yPos + LINE_HEIGHT
-    await rightImage(doc, signatureURL, yPos)
+    //yPos = yPos + LINE_HEIGHT
+    //await rightImage(doc, signatureURL, yPos)
 }
 
 
