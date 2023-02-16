@@ -1,10 +1,10 @@
 const { jsPDF } = require('jspdf');
+require('jspdf-autotable');
 const express = require('express');
 const bodyParser = require('body-parser');
-require('jspdf-autotable');
 require('dotenv').config();
 const { callAddFont } = require('./fontLoader')
-const { addBodyPage, addFooter } = require('./pageUtils');
+const { addBodyPage, addFooter, getHeaderHeight, getFooterHeight } = require('./pageUtils');
 const { loadOptions } = require('./lineUtils');
 const { studentsPreprocess } = require('./preprocessUtils');
 
@@ -12,7 +12,6 @@ const { studentsPreprocess } = require('./preprocessUtils');
 var app = express();
 
 //getting page configuration
-var chunkSize = process.env.CHUNK_SIZE;
 
 //POST body parser
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -28,11 +27,10 @@ app.post('/:key', function (request, reply) {
    //console.time("dbsave");
 
    //Reading & Analyzing request
+
    var studentList = request.body.students;
-   var signatureURL = request.body.signatureImageUrl;
    var pageHeader = request.body;
    pageHeader.templateHeader = OPTIONS.header;
-
    try {
       studentsPreprocess(studentList);
    }
@@ -41,6 +39,9 @@ app.post('/:key', function (request, reply) {
       reply.status(400).end();
       return
    }
+   const headerHeight = getHeaderHeight(pageHeader);
+   var chunkSize = headerHeight / 4.8;
+   const footerHeight = getFooterHeight(pageHeader, chunkSize, studentList);
 
    for (var i = 0; i < studentList.length; i++)
       studentList[i].stt = i + 1;
@@ -51,18 +52,26 @@ app.post('/:key', function (request, reply) {
 
    const doc = new jsPDF({ compress: true });
    doc.deletePage(1);
-   var yPos = 0;
+   var line = 1;
+   //document With Line
+   const docWL = [doc, line];
 
-   pageAmount = Math.ceil(studentList.length / chunkSize) + 1;
-   for (var i = 1; i < pageAmount; i++)
-      yPos = addBodyPage(doc, pageHeader, studentList, i, pageAmount);
-   addFooter(doc, signatureURL, pageAmount, yPos).then(() => {
-      var responseBuffer = doc.output('arraybuffer');
-      reply.setHeader('Content-Type', 'application/pdf')
-      reply.send(Buffer.from(responseBuffer));
-   }).catch(
-      () => { console.log("help~~~") }
-   )
+   pageAmount = Math.ceil(studentList.length / chunkSize);
+   console.log(footerHeight > 250.0);
+   if (footerHeight > 250.0) {
+      pageAmount = pageAmount + 1;
+      for (var i = 1; i < pageAmount; i++)
+         yPos = addBodyPage(docWL, pageHeader, studentList, i, pageAmount, chunkSize);
+   }
+   else {
+      for (var i = 1; i <= pageAmount; i++)
+         yPos = addBodyPage(docWL, pageHeader, studentList, i, pageAmount, chunkSize);
+   }
+   addFooter(docWL, pageAmount, yPos);
+   var responseBuffer = doc.output('arraybuffer');
+   reply.setHeader('Content-Type', 'application/pdf')
+   reply.send(Buffer.from(responseBuffer));
+
    //console.timeEnd("dbsave");
 })
 

@@ -1,27 +1,42 @@
 require('dotenv').config();
-const { jsPDF } = require("jspdf");
-const axios = require('axios');
-const fs = require('fs');
-const sizeOf = require('image-size')
-
 
 const PAGE_MARGIN = Number(process.env.PAGE_MARGIN)
 const LINE_HEIGHT = Number(process.env.LINE_HEIGHT)
+const JUSTIFY_SPACE_MIN = Number(process.env.JUSTIFY_SPACE_MIN)
 
 
 
-// const justifyArray = (doc, texts, y) => {
-//     const prevIndex = 0
-//     var currY = y;
-//     var lengthSum = 0 
-//     for(index in texts)
-//     {
-//         const textLength = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor
-//         lengthSum = lengthSum + textLength
-//         if (lengthSum)
-//     }
+//Refactor + Ex Handling 
 
-// }
+
+const justifyArray = (docWL, texts) => {
+    const doc = docWL[0];
+    var line = docWL[1];
+    texts = texts.filter(item => item)
+    var currArr = [];
+    const docLength = doc.internal.pageSize.width - 2 * PAGE_MARGIN;
+    var lengthSum = 0
+    for (index in texts) {
+        const text = texts[index]
+        const textLength = doc.getStringUnitWidth(texts[index]) * doc.internal.getFontSize() / doc.internal.scaleFactor
+        if (lengthSum + textLength > docLength || index === texts.length) {
+            justifyTexts(doc, currArr, line * LINE_HEIGHT);
+            line = line + 1;
+            currArr = [];
+            lengthSum = 0;
+        } else {
+            currArr.push(text);
+            lengthSum = lengthSum + textLength + JUSTIFY_SPACE_MIN
+        }
+    }
+    if (currArr) {
+        justifyTexts(doc, currArr, line * LINE_HEIGHT);
+        line = line + 1;
+    }
+    docWL[1] = line;
+}
+
+
 const justifyTexts = (doc, texts, y) => {
     texts = texts.filter(item => item)
     var startX = PAGE_MARGIN
@@ -46,43 +61,26 @@ const justifyTexts = (doc, texts, y) => {
     }
 }
 
-var centerText = (doc, text, y) => {
+var centerText = (docWL, text) => {
+    const doc = docWL[0];
+    const line = docWL[1];
     var textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;
     var textOffset = (doc.internal.pageSize.width - textWidth) / 2;
-    doc.text(textOffset, y, text);
+    doc.text(textOffset, line * LINE_HEIGHT, text);
+    docWL[1] = line + 1;
+
 }
 
-var rightText = (doc, text, y) => {
+var rightText = (docWL, text) => {
+
+    const doc = docWL[0];
+    const line = docWL[1];
     var textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;
     var textOffset = (doc.internal.pageSize.width - textWidth) - PAGE_MARGIN;
-    doc.text(textOffset, y, text);
+    doc.text(textOffset, line * LINE_HEIGHT, text);
+    docWL[1] = line + 1;
 }
 
-var rightImage = async (doc, imgURL, y) => {
-
-    const resp = await axios
-        .get(imgURL, {
-            responseType: "text",
-            responseEncoding: "base64",
-        })
-
-    if (resp.status == 200) {
-        const imgSize = sizeOf(Buffer.from(resp.data, 'base64'))
-        const imgRatio = imgSize.width / imgSize.height
-        var imgHeight = Number(process.env.IMG_HEIGHT)
-        var imgWidth = Number(process.env.IMG_WIDTH)
-
-        if (imgRatio <= 1) imgWidth = imgHeight * imgRatio
-        else imgHeight = imgWidth * imgRatio
-
-        const data = 'data:image/jpeg;base64,' + resp.data
-        const x = doc.internal.pageSize.width - PAGE_MARGIN - imgWidth
-        doc.addImage(data, 'JPEG', x, y - 5, imgWidth, imgHeight)
-    }
-    else {
-        console.log(`Image fetch error. Error code: ${resp.status}`)
-    }
-}
 
 const loadOptions = (key) => {
     var templateOptions;
@@ -101,4 +99,4 @@ const loadOptions = (key) => {
 
 
 
-module.exports = { justifyTexts, centerText, rightText, loadOptions, rightImage }
+module.exports = { justifyTexts, centerText, rightText, loadOptions, justifyArray }

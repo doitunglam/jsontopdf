@@ -1,6 +1,7 @@
 require('dotenv').config
 const { trimString } = require('./utils')
 
+
 const STUDENTID_REGEX = new RegExp(process.env.STUDENTID_REGEX)
 const NAME_MAX = Number(process.env.NAME_MAX)
 const CLASS_MAX = Number(process.env.CLASS_MAX)
@@ -18,5 +19,6 @@ const studentsPreprocess = (students) => {
         student.note = trimString(student.note, NOTE_MAX);
     }
 }
+
 
 module.exports = { studentsPreprocess }
