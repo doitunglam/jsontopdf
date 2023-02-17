@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { justifyTexts, centerText, rightText, justifyArray } = require("./lineUtils");
+const { justifyTexts, centerText, rightText, justifyArray, leftText } = require("./lineUtils");
 const { jsPDF } = require('jspdf');
 require('jspdf-autotable');
 
@@ -19,6 +19,7 @@ const addHeader = function (docWL, pageHeader, index, pageAmount) {
     //line 1
     doc.setFont('SVN-Times New Roman-normal', 'bold');
     doc.setFontSize(12);
+    leftText(docWL, "TRƯỜNG ĐẠI HỌC BÁCH KHOA HÀ NỘI", 1)
     doc.text("TRƯỜNG ĐẠI HỌC BÁCH KHOA HÀ NỘI", PAGE_MARGIN, docWL[1] * LINE_HEIGHT);
     rightText(docWL, "Trang " + index + " / " + pageAmount);
 
@@ -34,8 +35,11 @@ const addHeader = function (docWL, pageHeader, index, pageAmount) {
 
 
     //line 4
-    //TODO: update splitText rendering mechanism
-    var splitTexts = [pageHeader.courseId, pageHeader.courseName, pageHeader.classType, pageHeader.courseId, pageHeader.courseName, pageHeader.classType, pageHeader.courseId, pageHeader.courseName, pageHeader.classType, pageHeader.courseId, pageHeader.courseName, pageHeader.classType, pageHeader.malopthi, pageHeader.courseId, pageHeader.courseName, pageHeader.classType, pageHeader.malopthi, pageHeader.classId, pageHeader.courseId, pageHeader.courseName, pageHeader.classType, pageHeader.malopthi, pageHeader.classId];
+    var lopThi;
+    var classId;
+    if (pageHeader.malopthi) lopThi = "Lớp thi: " + pageHeader.malopthi;
+    if (pageHeader.classId) classId = "Lớp học: " + pageHeader.classId;
+    var splitTexts = [pageHeader.courseId, pageHeader.courseName, pageHeader.eduProgram, pageHeader.classType, lopThi, classId];
     justifyArray(docWL, splitTexts);
 }
 
@@ -98,7 +102,6 @@ const getFooterHeight = (pageHeader, chunkSize, studentList) => {
             yPos = data.cursor.y;
         }
     })
-    doc.save("a4.pdf");
 
     return yPos;
 }
@@ -178,6 +181,5 @@ const addFooter = async (docWL, pageAmount, yPos) => {
     docWL[1] = yPos / LINE_HEIGHT;
     rightText(docWL, "Cán bộ vào bảng điểm");
 }
-
 
 module.exports = { addBodyPage, addFooter, addHeader, getHeaderHeight, getFooterHeight }

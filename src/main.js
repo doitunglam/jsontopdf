@@ -39,25 +39,24 @@ app.post('/:key', function (request, reply) {
       reply.status(400).end();
       return
    }
+   //precalculate the amount of page will be used
    const headerHeight = getHeaderHeight(pageHeader);
-   var chunkSize = headerHeight / 4.8;
+   var chunkSize = headerHeight / 5.3;
    const footerHeight = getFooterHeight(pageHeader, chunkSize, studentList);
 
+   //student indexing
    for (var i = 0; i < studentList.length; i++)
       studentList[i].stt = i + 1;
 
-   //console.log(req.body);
 
-   //Create new PDF
-
+   //Create new PDF with line index
    const doc = new jsPDF({ compress: true });
    doc.deletePage(1);
    var line = 1;
-   //document With Line
    const docWL = [doc, line];
 
+   //
    pageAmount = Math.ceil(studentList.length / chunkSize);
-   console.log(footerHeight > 250.0);
    if (footerHeight > 250.0) {
       pageAmount = pageAmount + 1;
       for (var i = 1; i < pageAmount; i++)

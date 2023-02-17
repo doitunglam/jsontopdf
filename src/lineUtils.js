@@ -19,11 +19,12 @@ const justifyArray = (docWL, texts) => {
     for (index in texts) {
         const text = texts[index]
         const textLength = doc.getStringUnitWidth(texts[index]) * doc.internal.getFontSize() / doc.internal.scaleFactor
-        if (lengthSum + textLength > docLength || index === texts.length) {
+        if (lengthSum + textLength > docLength ) {
             justifyTexts(doc, currArr, line * LINE_HEIGHT);
             line = line + 1;
             currArr = [];
-            lengthSum = 0;
+            lengthSum = textLength;
+            currArr.push(text);
         } else {
             currArr.push(text);
             lengthSum = lengthSum + textLength + JUSTIFY_SPACE_MIN
@@ -32,6 +33,7 @@ const justifyArray = (docWL, texts) => {
     if (currArr) {
         justifyTexts(doc, currArr, line * LINE_HEIGHT);
         line = line + 1;
+        lengthSum = 0
     }
     docWL[1] = line;
 }
@@ -71,8 +73,7 @@ var centerText = (docWL, text) => {
 
 }
 
-var rightText = (docWL, text) => {
-
+var rightText = (docWL, text, isUnderline) => {
     const doc = docWL[0];
     const line = docWL[1];
     var textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;
@@ -81,6 +82,14 @@ var rightText = (docWL, text) => {
     docWL[1] = line + 1;
 }
 
+//there is no sanity left here, sorry for this mess
+var leftText = (docWL, text, isUnderline) => {
+    const doc = docWL[0];
+    const textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    doc.text(text, PAGE_MARGIN, docWL[1] * LINE_HEIGHT);
+    if (isUnderline)
+        doc.line(PAGE_MARGIN + 4, docWL[1] * LINE_HEIGHT + 2, PAGE_MARGIN + textWidth - 4, docWL[1] * LINE_HEIGHT + 2);
+}
 
 const loadOptions = (key) => {
     var templateOptions;
@@ -99,4 +108,4 @@ const loadOptions = (key) => {
 
 
 
-module.exports = { justifyTexts, centerText, rightText, loadOptions, justifyArray }
+module.exports = { justifyTexts, centerText, rightText, loadOptions, justifyArray, leftText }
