@@ -30,8 +30,10 @@ const addHeader = function (docWL, pageHeader, index, pageAmount) {
     //line 3
     doc.setFont('SVN-Times New Roman-normal', 'normal');
     doc.setFontSize(12)
-    doc.text("Khoa/Viện: " + pageHeader.unit, PAGE_MARGIN, docWL[1] * LINE_HEIGHT);
-    rightText(docWL, "Giảng viên: " + pageHeader.teacher);
+    docWL[1] = 3
+    justifyArray(docWL,["Khoa/Viện: " + pageHeader.unit,"Giảng viên: " + pageHeader.teacher])
+    // doc.text("Khoa/Viện: " + pageHeader.unit, PAGE_MARGIN, docWL[1] * LINE_HEIGHT);
+    // rightText(docWL, "Giảng viên: " + pageHeader.teacher);
 
 
     //line 4
@@ -47,7 +49,7 @@ const getHeaderHeight = (pageHeader) => {
     const doc = new jsPDF();
     const docWL = [doc, 1];
     addHeader(docWL, pageHeader, 1, 1);
-    return doc.internal.pageSize.width - 2 * PAGE_MARGIN - (docWL[1] - 1) * LINE_HEIGHT;
+    return doc.internal.pageSize.height - 2 * PAGE_MARGIN - (docWL[1] - 1) * LINE_HEIGHT;
 }
 
 const getFooterHeight = (pageHeader, chunkSize, studentList) => {
