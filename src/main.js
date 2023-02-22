@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const { callAddFont } = require('./fontLoader')
-const { addBodyPage, addFooter, getHeaderHeight, getFooterHeight } = require('./pageUtils');
+const { addBodyPage, addFooter, getTableChunkSize, getFooterHeight } = require('./pageUtils');
 const { loadOptions } = require('./lineUtils');
 const { studentsPreprocess } = require('./preprocessUtils');
 
@@ -40,8 +40,7 @@ app.post('/:key', function (request, reply) {
       return
    }
    //precalculate the amount of page will be used
-   const headerHeight = getHeaderHeight(pageHeader);
-   var chunkSize = headerHeight / 5.3;
+   const chunkSize = getTableChunkSize(pageHeader);
    const footerHeight = getFooterHeight(pageHeader, chunkSize, studentList);
 
    //student indexing

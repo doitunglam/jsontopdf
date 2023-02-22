@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { Table } = require('jspdf-autotable');
 const { justifyTexts, centerText, rightText, justifyArray, leftText } = require("./lineUtils");
 const { jsPDF } = require('jspdf');
 require('jspdf-autotable');
@@ -11,6 +12,7 @@ global.node = true;
 
 const LINE_HEIGHT = Number(process.env.LINE_HEIGHT)
 const PAGE_MARGIN = Number(process.env.PAGE_MARGIN)
+const TABLE_CELL_HEIGHT = Number(process.env.TABLE_CELL_HEIGHT)
 
 const addHeader = function (docWL, pageHeader, index, pageAmount) {
 
@@ -31,7 +33,7 @@ const addHeader = function (docWL, pageHeader, index, pageAmount) {
     doc.setFont('SVN-Times New Roman-normal', 'normal');
     doc.setFontSize(12)
     docWL[1] = 3
-    justifyArray(docWL,["Khoa/Viện: " + pageHeader.unit,"Giảng viên: " + pageHeader.teacher])
+    justifyArray(docWL, ["Khoa/Viện: " + pageHeader.unit, "Giảng viên: " + pageHeader.teacher])
     // doc.text("Khoa/Viện: " + pageHeader.unit, PAGE_MARGIN, docWL[1] * LINE_HEIGHT);
     // rightText(docWL, "Giảng viên: " + pageHeader.teacher);
 
@@ -45,11 +47,12 @@ const addHeader = function (docWL, pageHeader, index, pageAmount) {
     justifyArray(docWL, splitTexts);
 }
 
-const getHeaderHeight = (pageHeader) => {
+const getTableChunkSize = (pageHeader) => {
     const doc = new jsPDF();
     const docWL = [doc, 1];
     addHeader(docWL, pageHeader, 1, 1);
-    return doc.internal.pageSize.height - 2 * PAGE_MARGIN - (docWL[1] - 1) * LINE_HEIGHT;
+    const tableHeight = (doc.internal.pageSize.height - 2 * PAGE_MARGIN - (docWL[1] - 1) * LINE_HEIGHT)
+    return Math.floor(tableHeight / TABLE_CELL_HEIGHT);
 }
 
 const getFooterHeight = (pageHeader, chunkSize, studentList) => {
@@ -184,4 +187,4 @@ const addFooter = async (docWL, pageAmount, yPos) => {
     rightText(docWL, "Cán bộ vào bảng điểm");
 }
 
-module.exports = { addBodyPage, addFooter, addHeader, getHeaderHeight, getFooterHeight }
+module.exports = { addBodyPage, addFooter, addHeader, getTableChunkSize, getFooterHeight }
