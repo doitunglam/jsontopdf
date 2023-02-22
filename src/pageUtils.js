@@ -55,60 +55,20 @@ const getTableChunkSize = (pageHeader) => {
     return Math.floor(tableHeight / TABLE_CELL_HEIGHT);
 }
 
-const getFooterHeight = (pageHeader, chunkSize, studentList) => {
+const getLastPageRemaingHeight = (pageHeader, chunkSize, studentList) => {
     const doc = new jsPDF();
+
+    //add new page and set line pointer to 1
     doc.addPage();
     const docWL = [doc, 1];
 
     addHeader(docWL, pageHeader, 1, 1);
 
-    const lastPageChunkLength = studentList.length % chunkSize;
+    const LAST_PAGE_TABLE_LENGTH = (studentList.length % chunkSize) * TABLE_CELL_HEIGHT;
 
-    var studentListChunk = studentList.slice(0, lastPageChunkLength);
-
-    //Add table to PDF
-    var yPos = 0
     const line = docWL[1]++;
 
-    doc.autoTable({
-        //startX: 50,
-        startY: line * LINE_HEIGHT,
-        margin: PAGE_MARGIN,
-        styles: {
-            font: "SVN-Times New Roman-normal",
-            overflow: 'linebreak',
-        },
-        bodyStyles:
-        {
-            lineColor: Color = 10,
-            lineWidth: border = 0.3,
-            textColor: 20,
-            fontSize: 10
-        },
-        headStyles:
-        {
-            fillColor: null,
-            textColor: 20,
-            border: { top: 1, right: 1, bottom: 1, left: 1 },
-            lineWidth: border = 0.3,
-            lineColor: Color = 10,
-        },
-        theme: 'grid',
-        body: studentListChunk,
-        columns: [
-            { header: 'STT', dataKey: 'stt' },
-            { header: 'Mã SV', dataKey: 'studentId' },
-            { header: 'Họ và tên', dataKey: 'name' },
-            { header: 'Lớp SV', dataKey: 'class' },
-            { header: 'Điểm', dataKey: 'midterm' },
-            { header: 'Ghi chú', dataKey: 'note' },
-        ],
-        didDrawPage: function (data) {
-            yPos = data.cursor.y;
-        }
-    })
-
-    return yPos;
+    return line * LINE_HEIGHT + LAST_PAGE_TABLE_LENGTH;
 }
 
 const addBodyPage = function (docWL, pageHeader, studentList, index, pageAmount, chunkSize) {
@@ -187,4 +147,4 @@ const addFooter = async (docWL, pageAmount, yPos) => {
     rightText(docWL, "Cán bộ vào bảng điểm");
 }
 
-module.exports = { addBodyPage, addFooter, addHeader, getTableChunkSize, getFooterHeight }
+module.exports = { addBodyPage, addFooter, addHeader, getTableChunkSize, getLastPageRemaingHeight }
