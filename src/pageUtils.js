@@ -1,6 +1,5 @@
 require('dotenv').config();
-const { Table } = require('jspdf-autotable');
-const { justifyTexts, centerText, rightText, justifyArray, leftText } = require("./lineUtils");
+const { centerText, rightText, justifyArray, leftText } = require("./lineUtils");
 const { jsPDF } = require('jspdf');
 require('jspdf-autotable');
 
@@ -13,8 +12,9 @@ global.node = true;
 const LINE_HEIGHT = Number(process.env.LINE_HEIGHT)
 const PAGE_MARGIN = Number(process.env.PAGE_MARGIN)
 const TABLE_CELL_HEIGHT = Number(process.env.TABLE_CELL_HEIGHT)
+const FOOTER_MINIMUM_HEIGHT = Number(process.env.FOOTER_MINIMUM_HEIGHT)
 
-const addHeader = function (docWL, pageHeader, index, pageAmount) {
+const addHeader = (docWL, pageHeader, index, pageAmount) => {
 
     var doc = docWL[0];
 
@@ -22,7 +22,6 @@ const addHeader = function (docWL, pageHeader, index, pageAmount) {
     doc.setFont('SVN-Times New Roman-normal', 'bold');
     doc.setFontSize(12);
     leftText(docWL, "TRƯỜNG ĐẠI HỌC BÁCH KHOA HÀ NỘI", 1)
-    doc.text("TRƯỜNG ĐẠI HỌC BÁCH KHOA HÀ NỘI", PAGE_MARGIN, docWL[1] * LINE_HEIGHT);
     rightText(docWL, "Trang " + index + " / " + pageAmount);
 
     //line 2
@@ -32,15 +31,12 @@ const addHeader = function (docWL, pageHeader, index, pageAmount) {
     //line 3
     doc.setFont('SVN-Times New Roman-normal', 'normal');
     doc.setFontSize(12)
-    docWL[1] = 3
     justifyArray(docWL, ["Khoa/Viện: " + pageHeader.unit, "Giảng viên: " + pageHeader.teacher])
-    // doc.text("Khoa/Viện: " + pageHeader.unit, PAGE_MARGIN, docWL[1] * LINE_HEIGHT);
-    // rightText(docWL, "Giảng viên: " + pageHeader.teacher);
-
 
     //line 4
     var lopThi;
     var classId;
+    //null guard
     if (pageHeader.malopthi) lopThi = "Lớp thi: " + pageHeader.malopthi;
     if (pageHeader.classId) classId = "Lớp học: " + pageHeader.classId;
     var splitTexts = [pageHeader.courseId, pageHeader.courseName, pageHeader.eduProgram, pageHeader.classType, lopThi, classId];
@@ -51,27 +47,36 @@ const getTableChunkSize = (pageHeader) => {
     const doc = new jsPDF();
     const docWL = [doc, 1];
     addHeader(docWL, pageHeader, 1, 1);
-    const tableHeight = (doc.internal.pageSize.height - 2 * PAGE_MARGIN - (docWL[1] - 1) * LINE_HEIGHT)
-    return Math.floor(tableHeight / TABLE_CELL_HEIGHT);
+    const PAGE_HEIGHT = doc.internal.pageSize.height 
+    const TABLE_HEIGHT = (PAGE_HEIGHT - 2 * PAGE_MARGIN - (docWL[1] - 1) * LINE_HEIGHT)
+    return Math.floor(TABLE_HEIGHT / TABLE_CELL_HEIGHT);
 }
 
-const getLastPageRemaingHeight = (pageHeader, chunkSize, studentList) => {
+const canLastPageContainsFooter = (pageHeader, chunkSize, studentList) => {
+
     const doc = new jsPDF();
 
     //add new page and set line pointer to 1
     doc.addPage();
     const docWL = [doc, 1];
 
+    const PAGE_HEIGHT = doc.internal.pageSize.height
+
     addHeader(docWL, pageHeader, 1, 1);
 
-    const LAST_PAGE_TABLE_LENGTH = (studentList.length % chunkSize) * TABLE_CELL_HEIGHT;
+    const LAST_PAGE_TABLE_HEIGHT = (studentList.length % chunkSize) * TABLE_CELL_HEIGHT;
 
-    const line = docWL[1]++;
+    const LINE = docWL[1]++;
 
-    return line * LINE_HEIGHT + LAST_PAGE_TABLE_LENGTH;
+    const RENDERED_SPACE_HEIGHT = LINE * LINE_HEIGHT + PAGE_MARGIN + LAST_PAGE_TABLE_HEIGHT;
+
+    if ( RENDERED_SPACE_HEIGHT + FOOTER_MINIMUM_HEIGHT < PAGE_HEIGHT) {
+        return true
+    }
+    return false
 }
 
-const addBodyPage = function (docWL, pageHeader, studentList, index, pageAmount, chunkSize) {
+const addBodyPage = (docWL, pageHeader, studentList, index, pageAmount, chunkSize) => {
     const doc = docWL[0];
     doc.addPage();
     docWL[1] = 1;
@@ -124,10 +129,13 @@ const addBodyPage = function (docWL, pageHeader, studentList, index, pageAmount,
     return yPos
 }
 
-const addFooter = async (docWL, pageAmount, yPos) => {
+const addFooter = (docWL, pageAmount, yPos) => {
     const doc = docWL[0];
 
-    if (yPos > 250) {
+    const PAGE_HEIGHT = doc.internal.pageSize.height
+
+    // if the remaining height is too litte, add new page
+    if (yPos + FOOTER_MINIMUM_HEIGHT > PAGE_HEIGHT) {
         yPos = PAGE_MARGIN
         doc.addPage();
         docWL[1] = 1;
@@ -147,4 +155,4 @@ const addFooter = async (docWL, pageAmount, yPos) => {
     rightText(docWL, "Cán bộ vào bảng điểm");
 }
 
-module.exports = { addBodyPage, addFooter, addHeader, getTableChunkSize, getLastPageRemaingHeight }
+module.exports = { addBodyPage, addFooter, addHeader, getTableChunkSize, canLastPageContainsFooter }

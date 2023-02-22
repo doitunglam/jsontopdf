@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const { callAddFont } = require('./fontLoader')
-const { addBodyPage, addFooter, getTableChunkSize, getLastPageRemaingHeight } = require('./pageUtils');
+const { addBodyPage, addFooter, getTableChunkSize, canLastPageContainsFooter } = require('./pageUtils');
 const { loadOptions } = require('./lineUtils');
 const { studentsPreprocess } = require('./preprocessUtils');
 
@@ -45,8 +45,6 @@ app.post('/:key', function (request, reply) {
    //precalculate the amount of student in one page
    const chunkSize = getTableChunkSize(pageHeader)
 
-   const lastPageRemaingHeight = getLastPageRemaingHeight(pageHeader, chunkSize, studentList)
-
    //Create new PDF document with line pointer
    const doc = new jsPDF({ compress: true });
    doc.deletePage(1);
@@ -58,7 +56,7 @@ app.post('/:key', function (request, reply) {
    let allPageAmount = bodyPageAmount;
 
    // increase page amount if the remaining height is not sufficient
-   if (lastPageRemaingHeight > 250.0)
+   if (!canLastPageContainsFooter(pageHeader,chunkSize,studentList))
       allPageAmount = allPageAmount + 1;
    for (var i = 1; i <= bodyPageAmount; i++)
       yPos = addBodyPage(pdfDocWithLinePointer, pageHeader, studentList, i, allPageAmount, chunkSize);
