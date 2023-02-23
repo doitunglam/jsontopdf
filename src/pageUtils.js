@@ -13,6 +13,8 @@ const LINE_HEIGHT = Number(process.env.LINE_HEIGHT)
 const PAGE_MARGIN = Number(process.env.PAGE_MARGIN)
 const TABLE_CELL_HEIGHT = Number(process.env.TABLE_CELL_HEIGHT)
 const FOOTER_MINIMUM_HEIGHT = Number(process.env.FOOTER_MINIMUM_HEIGHT)
+const LINE_SPACING = Number(process.env.LINE_SPACING)
+
 
 // add header for a pdfDoc with line.
 // index 
@@ -59,10 +61,10 @@ const addHeader = (docWL, pageHeader, pageIndex, pageAmount) => {
 
 const getTableChunkSize = (pageHeader) => {
     const doc = new jsPDF();
-    const docWL = [doc, 1];
+    const docWL = [doc, PAGE_MARGIN];
     addHeader(docWL, pageHeader, 1, 1);
-    const HEADER_HEIGHT = (docWL[1] - 1) * LINE_HEIGHT
-    const PAGE_INNER_HEIGHT = doc.internal.pageSize.height - 2 * PAGE_MARGIN
+    const HEADER_HEIGHT = docWL[1]
+    const PAGE_INNER_HEIGHT = doc.internal.pageSize.height - PAGE_MARGIN
     const TABLE_HEIGHT = (PAGE_INNER_HEIGHT - HEADER_HEIGHT)
     return Math.floor(TABLE_HEIGHT / TABLE_CELL_HEIGHT);
 }
@@ -73,7 +75,7 @@ const canLastPageContainsFooter = (pageHeader, chunkSize, studentList) => {
 
     //add new page and set line pointer to 1
     doc.addPage();
-    const docWL = [doc, 1];
+    const docWL = [doc, PAGE_MARGIN];
 
     const PAGE_HEIGHT = doc.internal.pageSize.height
 
@@ -81,9 +83,9 @@ const canLastPageContainsFooter = (pageHeader, chunkSize, studentList) => {
 
     const LAST_PAGE_TABLE_HEIGHT = (studentList.length % chunkSize) * TABLE_CELL_HEIGHT;
 
-    const LINE = docWL[1]++;
+    const upperY = docWL[1];
 
-    const RENDERED_SPACE_HEIGHT = LINE * LINE_HEIGHT + PAGE_MARGIN + LAST_PAGE_TABLE_HEIGHT;
+    const RENDERED_SPACE_HEIGHT = upperY + PAGE_MARGIN + LAST_PAGE_TABLE_HEIGHT;
 
     if (RENDERED_SPACE_HEIGHT + FOOTER_MINIMUM_HEIGHT < PAGE_HEIGHT) {
         return true
@@ -94,18 +96,18 @@ const canLastPageContainsFooter = (pageHeader, chunkSize, studentList) => {
 const addBodyPage = (docWL, pageHeader, studentList, index, pageAmount) => {
     const doc = docWL[0];
     doc.addPage();
-    docWL[1] = 1;
+    docWL[1] = PAGE_MARGIN;
 
     addHeader(docWL, pageHeader, index, pageAmount);
 
 
-    //Add table to PDF
+    //Add table to PDFe
     var yPos = 0
-    const line = docWL[1]++;
+    const upperY = docWL[1];
 
     doc.autoTable({
         //startX: 50,
-        startY: line * LINE_HEIGHT,
+        startY: upperY,
         margin: PAGE_MARGIN,
         styles: {
             font: "SVN-Times New Roman-normal",
@@ -140,6 +142,7 @@ const addBodyPage = (docWL, pageHeader, studentList, index, pageAmount) => {
             yPos = data.cursor.y;
         }
     })
+    docWL[1] = yPos + LINE_SPACING
     return yPos
 }
 
@@ -152,21 +155,34 @@ const addFooter = (docWL, pageAmount, yPos) => {
     if (yPos + FOOTER_MINIMUM_HEIGHT > PAGE_HEIGHT) {
         yPos = PAGE_MARGIN
         doc.addPage();
-        docWL[1] = 1;
+        docWL[1] = PAGE_MARGIN;
         doc.setFont('SVN-Times New Roman-normal', 'bold');
         rightText(docWL, "Trang " + pageAmount + " / " + pageAmount);
     }
 
-    yPos = yPos + LINE_HEIGHT
     var dateNow = new Date();
     var day = dateNow.getUTCDate();
     var month = dateNow.getUTCMonth() + 1;
     var year = dateNow.getFullYear();
 
-    doc.setFont('SVN-Times New Roman-normal', 'normal');
-    doc.text("Ngày xuất bảng điểm: " + day + "/" + month + "/" + year, PAGE_MARGIN, yPos);
-    docWL[1] = yPos / LINE_HEIGHT;
-    rightText(docWL, "Cán bộ vào bảng điểm");
+    const pageSize = { 'w': doc.internal.pageSize.width, 'h': doc.internal.pageSize.height }
+    console.log(pageSize)
+
+    doc.setFont('SVN-Times New Roman-normal', 'normal')
+    leftText(docWL, "Ngày xuất bảng điểm: " + day + "/" + month + "/" + year)
+    rightText(docWL, "Cán bộ vào bảng điểm")
+
+    const PLACEHOLDER_WIDTH = Number(process.env.PLACEHOLDER_WIDTH)
+    const PLACEHOLDER_HEIGHT = Number(process.env.PLACEHOLDER_HEIGHT)
+    const placeHolder = {
+        'page': pageAmount,
+        'width': PLACEHOLDER_WIDTH,
+        'height': PLACEHOLDER_HEIGHT,
+        'x': pageSize.w - PAGE_MARGIN - PLACEHOLDER_WIDTH,
+        'y': docWL[1] + PLACEHOLDER_HEIGHT
+    }
+
+    return placeHolder
 }
 
 module.exports = { addBodyPage, addFooter, addHeader, getTableChunkSize, canLastPageContainsFooter }

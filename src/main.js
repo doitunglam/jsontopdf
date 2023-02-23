@@ -47,13 +47,13 @@ app.post('/:key', function (request, reply) {
    const chunkSize = getTableChunkSize(pageHeader)
    const splitedStudentList = splitArray(studentList, chunkSize)
 
-   //Create new PDF document with line pointer
+   //Create new PDF document with upperY coordinate
    //Compress the document
    const doc = new jsPDF({ compress: true });
    doc.deletePage(1);
-   var line = 1;
+   var upperY = Number(process.env.PAGE_MARGIN);
 
-   const pdfDocWithLinePointer = [doc, line];
+   const pdfDocWithYCoordinatePointer = [doc, upperY];
 
    const bodyPageAmount = Math.ceil(studentList.length / chunkSize);
    let allPageAmount = bodyPageAmount;
@@ -62,10 +62,14 @@ app.post('/:key', function (request, reply) {
    // increase page amount if the remaining height is not sufficient
    if (!canLastPageContainsFooter(pageHeader, chunkSize, studentList))
       allPageAmount = allPageAmount + 1;
+   var yPos = 0
    for (var i = 1; i <= bodyPageAmount; i++)
-      yPos = addBodyPage(pdfDocWithLinePointer, pageHeader, splitedStudentList[i - 1], i, allPageAmount);
+      yPos = addBodyPage(pdfDocWithYCoordinatePointer, pageHeader, splitedStudentList[i - 1], i, allPageAmount);
 
-   addFooter(pdfDocWithLinePointer, allPageAmount, yPos);
+
+   //placholder unit is in mm
+   const placeHolder = addFooter(pdfDocWithYCoordinatePointer, allPageAmount, yPos);
+
 
    //send response back to client
    var responseBuffer = doc.output('arraybuffer');
