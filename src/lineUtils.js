@@ -76,6 +76,7 @@ var rightText = (docWL, text) => {
     docWL[1] = line + 1;
 }
 
+//isUnderline flag denotes the text has a ruler at the bottom of text
 var leftText = (docWL, text, isUnderline) => {
     const doc = docWL[0];
     const textWidth = doc.getStringUnitWidth(text) * doc.internal.getFontSize() / doc.internal.scaleFactor;

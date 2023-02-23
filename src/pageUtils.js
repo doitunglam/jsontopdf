@@ -14,41 +14,56 @@ const PAGE_MARGIN = Number(process.env.PAGE_MARGIN)
 const TABLE_CELL_HEIGHT = Number(process.env.TABLE_CELL_HEIGHT)
 const FOOTER_MINIMUM_HEIGHT = Number(process.env.FOOTER_MINIMUM_HEIGHT)
 
-const addHeader = (docWL, pageHeader, index, pageAmount) => {
+// add header for a pdfDoc with line.
+// index 
+const addHeader = (docWL, pageHeader, pageIndex, pageAmount) => {
 
-    var doc = docWL[0];
+    const doc = docWL[0];
 
     //line 1
     doc.setFont('SVN-Times New Roman-normal', 'bold');
     doc.setFontSize(12);
-    leftText(docWL, "TRƯỜNG ĐẠI HỌC BÁCH KHOA HÀ NỘI", 1)
-    rightText(docWL, "Trang " + index + " / " + pageAmount);
+    const universityName = "TRƯỜNG ĐẠI HỌC BÁCH KHOA HÀ NỘI"
+    const pageIndexText = "Trang " + pageIndex + " / " + pageAmount
+    leftText(docWL, universityName, 1)
+    rightText(docWL, pageIndexText);
 
     //line 2
+    const pageHeaderTitle = pageHeader.templateHeader + " " + pageHeader.semester
     doc.setFontSize(16)
-    centerText(docWL, pageHeader.templateHeader + " " + pageHeader.semester);
+    centerText(docWL, pageHeaderTitle);
 
     //line 3
     doc.setFont('SVN-Times New Roman-normal', 'normal');
     doc.setFontSize(12)
-    justifyArray(docWL, ["Khoa/Viện: " + pageHeader.unit, "Giảng viên: " + pageHeader.teacher])
+    const facultyText = "Khoa/Viện: " + pageHeader.unit
+    const lecturerText = "Giảng viên: " + pageHeader.teacher
+    justifyArray(docWL, [facultyText, lecturerText])
 
     //line 4
-    var lopThi;
+    var examClass;
     var classId;
     //null guard
-    if (pageHeader.malopthi) lopThi = "Lớp thi: " + pageHeader.malopthi;
+    if (pageHeader.malopthi) examClass = "Lớp thi: " + pageHeader.malopthi;
     if (pageHeader.classId) classId = "Lớp học: " + pageHeader.classId;
-    var splitTexts = [pageHeader.courseId, pageHeader.courseName, pageHeader.eduProgram, pageHeader.classType, lopThi, classId];
-    justifyArray(docWL, splitTexts);
+
+    const courseId = pageHeader.courseId
+    const courseName = pageHeader.courseName
+    const eduProgram = pageHeader.eduProgram
+    const classType = pageHeader.classType
+
+
+    var couseDetailArray = [courseId, courseName, eduProgram, classType, examClass, classId];
+    justifyArray(docWL, couseDetailArray);
 }
 
 const getTableChunkSize = (pageHeader) => {
     const doc = new jsPDF();
     const docWL = [doc, 1];
     addHeader(docWL, pageHeader, 1, 1);
-    const PAGE_HEIGHT = doc.internal.pageSize.height 
-    const TABLE_HEIGHT = (PAGE_HEIGHT - 2 * PAGE_MARGIN - (docWL[1] - 1) * LINE_HEIGHT)
+    const HEADER_HEIGHT = (docWL[1] - 1) * LINE_HEIGHT
+    const PAGE_INNER_HEIGHT = doc.internal.pageSize.height - 2 * PAGE_MARGIN
+    const TABLE_HEIGHT = (PAGE_INNER_HEIGHT - HEADER_HEIGHT)
     return Math.floor(TABLE_HEIGHT / TABLE_CELL_HEIGHT);
 }
 
@@ -70,20 +85,19 @@ const canLastPageContainsFooter = (pageHeader, chunkSize, studentList) => {
 
     const RENDERED_SPACE_HEIGHT = LINE * LINE_HEIGHT + PAGE_MARGIN + LAST_PAGE_TABLE_HEIGHT;
 
-    if ( RENDERED_SPACE_HEIGHT + FOOTER_MINIMUM_HEIGHT < PAGE_HEIGHT) {
+    if (RENDERED_SPACE_HEIGHT + FOOTER_MINIMUM_HEIGHT < PAGE_HEIGHT) {
         return true
     }
     return false
 }
 
-const addBodyPage = (docWL, pageHeader, studentList, index, pageAmount, chunkSize) => {
+const addBodyPage = (docWL, pageHeader, studentList, index, pageAmount) => {
     const doc = docWL[0];
     doc.addPage();
     docWL[1] = 1;
 
     addHeader(docWL, pageHeader, index, pageAmount);
 
-    var studentListChunk = studentList.slice((index - 1) * chunkSize, index * chunkSize);
 
     //Add table to PDF
     var yPos = 0
@@ -113,7 +127,7 @@ const addBodyPage = (docWL, pageHeader, studentList, index, pageAmount, chunkSiz
             lineColor: Color = 10,
         },
         theme: 'grid',
-        body: studentListChunk,
+        body: studentList,
         columns: [
             { header: 'STT', dataKey: 'stt' },
             { header: 'Mã SV', dataKey: 'studentId' },

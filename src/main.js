@@ -7,6 +7,7 @@ const { callAddFont } = require('./fontLoader')
 const { addBodyPage, addFooter, getTableChunkSize, canLastPageContainsFooter } = require('./pageUtils');
 const { loadOptions } = require('./lineUtils');
 const { studentsPreprocess } = require('./preprocessUtils');
+const { splitArray } = require('./utils');
 
 //create new Express App
 var app = express();
@@ -44,8 +45,10 @@ app.post('/:key', function (request, reply) {
 
    //precalculate the amount of student in one page
    const chunkSize = getTableChunkSize(pageHeader)
+   const splitedStudentList = splitArray(studentList, chunkSize)
 
    //Create new PDF document with line pointer
+   //Compress the document
    const doc = new jsPDF({ compress: true });
    doc.deletePage(1);
    var line = 1;
@@ -55,11 +58,12 @@ app.post('/:key', function (request, reply) {
    const bodyPageAmount = Math.ceil(studentList.length / chunkSize);
    let allPageAmount = bodyPageAmount;
 
+
    // increase page amount if the remaining height is not sufficient
-   if (!canLastPageContainsFooter(pageHeader,chunkSize,studentList))
+   if (!canLastPageContainsFooter(pageHeader, chunkSize, studentList))
       allPageAmount = allPageAmount + 1;
    for (var i = 1; i <= bodyPageAmount; i++)
-      yPos = addBodyPage(pdfDocWithLinePointer, pageHeader, studentList, i, allPageAmount, chunkSize);
+      yPos = addBodyPage(pdfDocWithLinePointer, pageHeader, splitedStudentList[i - 1], i, allPageAmount);
 
    addFooter(pdfDocWithLinePointer, allPageAmount, yPos);
 
